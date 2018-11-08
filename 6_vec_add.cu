@@ -9,14 +9,17 @@
 
 __global__ void gpuAdd(int *d_a, int *d_b, int* d_c, int N=num)
 {
+	printf("%d -- ", threadIdx.x);
 	int tid = blockIdx.x*blockDim.x + threadIdx.x;
+	int sum=0;
 	while(tid < N)
 	{
-//		printf("tid #[%d] x #[%d]\n", tid, threadIdx.x);
 		d_c[tid] = d_a[tid] + d_b[tid];
-//		printf("#[%d] %d + %d = %d\n", tid, d_a[tid], d_b[tid], d_c[tid]);
+		printf("#[%d,%d] %d + %d = %d\n", tid,threadIdx.x, d_a[tid], d_b[tid], d_c[tid]);
 		tid += blockDim.x * gridDim.x;
+//		sum += d_c[tid];
 	}
+//	printf("#[%d] sum=%d\n", threadIdx.x, sum);
 }
 void cpuAdd(std::vector<int> &h_a, std::vector<int> &h_b, std::vector<int> &h_c, int N=num)
 {
@@ -35,6 +38,7 @@ int main(void)
 	cudaMalloc((void**)&d_a, N*sizeof(int));
 	cudaMalloc((void**)&d_b, N*sizeof(int));
 	cudaMalloc((void**)&d_c, N*sizeof(int));
+
 //	std::vector<int> h_a(N), h_b(N), h_c(N);
 	int
 		*h_a = (int*)malloc(N*sizeof(int)),
@@ -56,15 +60,15 @@ int main(void)
 
 	clock_t start, end;
 	start = clock();
-	gpuAdd <<<5, 5>>> (d_a, d_b, d_c, N);
+	gpuAdd <<<5, 7>>> (d_a, d_b, d_c, N);
 	cudaDeviceSynchronize();
 	end = clock();
 	std:: cout << "GPU time: " << (double)(end-start)/ CLOCKS_PER_SEC <<'\n';
-	cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
+//	cudaMemcpy(h_c, d_c, N*sizeof(int), cudaMemcpyDeviceToHost);
 
-	std::for_each(h_c, h_c+N, [](int x){
-		std::cout << x << "\n";
-	});
+//	std::for_each(h_c, h_c+N, [](int x){
+//		std::cout << x << "\n";
+//	});
 
 	free(h_a);
 	free(h_b);
